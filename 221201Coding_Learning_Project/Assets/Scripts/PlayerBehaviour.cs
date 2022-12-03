@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class PlayerBehaviour : MonoBehaviour
 {
+    public delegate void JumpingEvent();
+
+    public event JumpingEvent playerJump;
+    
     public float distanceToGround = 0.1f;
     public LayerMask groundLayer;
     public float moveSpeed = 10f;
@@ -22,12 +26,25 @@ public class PlayerBehaviour : MonoBehaviour
     private bool shoot;
 
     private BoxCollider _en;
+
+    private GameBehaviour _gameManager;
     
     // Start is called before the first frame update
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
         _en = GetComponent<BoxCollider>();
+        _gameManager = GameObject.Find("Game Manager").GetComponent<GameBehaviour>();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // 参数collision 是Collision 类的，所以需要用gameObject定位到 GameObject上然后再获取名字
+        if (collision.gameObject.name == "Enemy")
+        {
+            _gameManager.HP -= 1;
+
+        }
     }
 
     // Update is called once per frame
@@ -40,7 +57,7 @@ public class PlayerBehaviour : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            newBullet = Instantiate(bullet,gameObject.transform.position+new Vector3(0,0,0),gameObject.transform.rotation) as GameObject;
+            newBullet = Instantiate(bullet,gameObject.transform.position+new Vector3(0,0.5f,0),gameObject.transform.rotation) as GameObject;
             bulletRB = newBullet.GetComponent<Rigidbody>();
             shoot = true;
         }
@@ -68,6 +85,7 @@ public class PlayerBehaviour : MonoBehaviour
         if (IsGrounded(angleRot) && Input.GetKeyDown(KeyCode.Space))
         {
             _rb.AddForce(Vector3.up * jumpVelocity, ForceMode.Impulse);
+            playerJump();
         }
 
         if (shoot)
